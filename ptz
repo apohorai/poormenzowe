@@ -26,11 +26,11 @@ user=$2
 echo "User:"$2
 system=$3
 echo "System="$3
-echo "copy UXfile to ZOSfile"
+echo "Copy UXfile to ZOSfile"
 cat $uxfile | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >$uxfile"
 echo "Copy the command file to ZOS"
 cat command | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command"
-echo "chmod"
-sshpass -f zos_pwd ssh $LazySSH $2@$3 -T "chmod +x ./command"
-echo "execute the copy on the ZOS side"
-sshpass -f zos_pwd ssh $LazySSH $2@$3 -T "./command"
+echo "Chmod"
+sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "chmod +x ./command"
+echo "Execute the copy on the ZOS side"
+sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "./command"
