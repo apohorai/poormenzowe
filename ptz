@@ -1,0 +1,36 @@
+LazySSH="-o KexAlgorithms=diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-dss"
+# get the filename $1
+IFS='.' read -ra parts <<< "$1"
+project="${parts[0]}"
+group="${parts[1]}"
+type="${parts[2]}"
+member="${parts[3]}"
+# Display the variables
+echo "Project:"$project
+echo "Group:"$group
+echo "Type:"$type
+echo "Member:"$member
+
+uxfile=$project.$group.$type.$member 
+echo "UXfile="$uxfile
+
+zosds="\"//'$project.$group.$type($member)'\""
+echo "ZOSfile="$zosds
+
+command="cp $project.$group.$type.$member \"//'$project.$group.$type($member)'\"" 
+echo "execute this:"$command
+echo $command >command
+
+#get the user $2
+user=$2
+echo "User:"$2
+system=$3
+echo "System="$3
+echo "copy UXfile to ZOSfile"
+cat $uxfile | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >$uxfile"
+echo "Copy the command file to ZOS"
+cat command | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command"
+echo "chmod"
+sshpass -f zos_pwd ssh $LazySSH $2@$3 -T "chmod +x ./command"
+echo "execute the copy on the ZOS side"
+sshpass -f zos_pwd ssh $LazySSH $2@$3 -T "./command"
