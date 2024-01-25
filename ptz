@@ -1,4 +1,5 @@
 LazySSH="-o KexAlgorithms=diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-dss"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # get the filename $1
 IFS='.' read -ra parts <<< "$1"
 echo "${parts[0]}"
@@ -46,10 +47,10 @@ echo "User:"$2
 system=$3
 echo "System="$3
 echo "Copy UXfile to ZOSfile"
-cat $uxfile | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >$uxfile"
+cat $uxfile | sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >$uxfile"
 echo "Copy the command file to ZOS"
-cat command | sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command"
+cat command | sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command"
 echo "Chmod"
-sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "chmod +x ./command"
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "chmod +x ./command"
 echo "Execute the copy on the ZOS side"
-sshpass -f zos_pwd$2 ssh $LazySSH $2@$3 -T "./command"
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "./command"
