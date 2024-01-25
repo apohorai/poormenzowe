@@ -25,7 +25,7 @@ else
  group="${parts[1]}"
  type="${parts[2]}"
  member="${parts[3]}"
- uxfile=$project.$group.$member 
+ uxfile=$project.$group.$type.$member 
  zosds="\"//'$project.$group.$type($member)'\""
  command="cp \"//'$project.$group.$type($member)'\" $project.$group.$type.$member" 
 fi
