@@ -1,23 +1,42 @@
 LazySSH="-o KexAlgorithms=diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-dss"
 # get the filename $1
 IFS='.' read -ra parts <<< "$1"
-project="${parts[0]}"
-group="${parts[1]}"
-type="${parts[2]}"
-member="${parts[3]}"
+echo "${parts[0]}"
+echo "${parts[1]}"
+echo "${parts[2]}"
+echo "${parts[3]}"
+project=""
+if [ -z "${parts[3]}" ] && [ -z "${parts[2]}" ]; then
+ echo "2 levels"
+ project="${parts[0]}"
+ member="${parts[1]}"
+ command="cp $project.$member \"//'$project($member)'\"" 
+elif [ -z "${parts[3]}" ] ;then
+ echo "3 levels"
+ project="${parts[0]}"
+ group="${parts[1]}"
+ member="${parts[2]}"
+ uxfile=$project.$group.$member 
+ zosds="\"//'$project.$group($member)'\""
+ command="cp $project.$group.$member \"//'$project.$group($member)'\"" 
+else 
+ echo "4 levels"
+ project="${parts[0]}"
+ group="${parts[1]}"
+ type="${parts[2]}"
+ member="${parts[3]}"
+ uxfile=$project.$group.$type.$member 
+ zosds="\"//'$project.$group.$type($member)'\""
+ command="cp $project.$group.$type.$member \"//'$project.$group.$type($member)'\"" 
+fi
 # Display the variables
 echo "Project:"$project
 echo "Group:"$group
 echo "Type:"$type
 echo "Member:"$member
-
-uxfile=$project.$group.$type.$member 
 echo "UXfile="$uxfile
-
-zosds="\"//'$project.$group.$type($member)'\""
 echo "ZOSfile="$zosds
 
-command="cp $project.$group.$type.$member \"//'$project.$group.$type($member)'\"" 
 echo "execute this:"$command
 echo $command >command
 
