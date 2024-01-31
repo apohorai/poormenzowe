@@ -1,0 +1,81 @@
+LazySSH="-o KexAlgorithms=diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-dss"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# get the filename $1
+IFS='.' read -ra parts <<< "$1"
+echo "${parts[0]}"
+echo "${parts[1]}"
+echo "${parts[2]}"
+echo "${parts[3]}"
+project=""
+if [ -z "${parts[3]}" ] && [ -z "${parts[2]}" ]; then
+ echo "2 levels"
+ project="${parts[0]}"
+ member="${parts[1]}"
+ command="submit \"//'$project($member)'\"" 
+elif [ -z "${parts[3]}" ] ;then
+ echo "3 levels"
+ project="${parts[0]}"
+ group="${parts[1]}"
+ member="${parts[2]}"
+ uxfile=$project.$group.$member 
+ zosds="\"//'$project.$group($member)'\""
+ command="submit \"//'$project.$group($member)'\"" 
+else 
+ echo "4 levels"
+ project="${parts[0]}"
+ group="${parts[1]}"
+ type="${parts[2]}"
+ member="${parts[3]}"
+ uxfile=$project.$group.$type.$member 
+ zosds="\"//'$project.$group.$type($member)'\""
+ command="submit \"//'$project.$group.$type($member)'\"" 
+ command2="cat \"//'$project.$group.$type($member)'\"" 
+
+fi
+# Display the variables
+echo "Project:"$project
+echo "Group:"$group
+echo "Type:"$type
+echo "Member:"$member
+echo "UXfile="$uxfile
+echo "ZOSfile="$zosds
+
+echo "execute this:"$command
+echo $command >command
+echo $command2 >command2
+
+#get the user $2
+user=$2
+echo "User:"$2
+system=$3
+echo "System="$3
+cat command | sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command"
+cat command2 | sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "cat >command2"
+echo "Chmod"
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "chmod +x ./command"
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "chmod +x ./command2"
+
+echo "Execute the copy on the ZOS side"
+echo $SCRIPT_DIR$uxfile
+mkdir -p $SCRIPT_DIR/logs
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "./command" >$SCRIPT_DIR/logs/$uxfile.sub
+sshpass -f $SCRIPT_DIR/zos_pwd$2 ssh $LazySSH $2@$3 -T "./command2" >$SCRIPT_DIR/logs/$uxfile.jcl
+
+cat $SCRIPT_DIR/logs/$uxfile.sub
+result=$SCRIPT_DIR/logs/$uxfile.sub
+echo $result
+IFS=' ' read -ra parts < $result
+jobid="${parts[1]}"
+mv $SCRIPT_DIR/logs/$uxfile.sub $SCRIPT_DIR/logs/$uxfile.sub_$jobid
+mv $SCRIPT_DIR/logs/$uxfile.jcl $SCRIPT_DIR/logs/$uxfile.jcl_$jobid
+
+jobnameFind=`cat $SCRIPT_DIR/logs/$uxfile.jcl_$jobid |grep JOB`
+echo $jobnameFind
+export jobname=${jobnameFind:2:8}
+IFS=' ' read -ra parts <<< $jobname
+export jobname="${parts[0]}"
+echo $jobname
+echo $SCRIPT_DIR/logs/$uxfile.jcl_$jobid 
+echo $jobid
+echo $SCRIPT_DIR/logs/$uxfile.jcl_"$jobid"_"$jobname"
+mv $SCRIPT_DIR/logs/$uxfile.jcl_"$jobid" $SCRIPT_DIR/logs/$uxfile.jcl_"$jobid"_"$jobname"
